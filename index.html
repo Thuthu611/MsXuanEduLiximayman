@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vòng Quay May Mắn</title>
+  <style>
+    body { text-align: center; font-family: Arial, sans-serif; }
+    canvas { margin-top: 20px; }
+    #spinButton { padding: 10px 20px; font-size: 18px; cursor: pointer; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Vòng Quay May Mắn</h2>
+  <canvas id="wheelCanvas" width="400" height="400"></canvas>
+  <br>
+  <button id="spinButton">Quay</button>
+  <p id="result"></p>
+
+  <script>
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const formattedSegments = [
+      "30 phút coaching\ntrực tiếp về cách\ndạy con tiếng Anh",
+      "LÌ XÌ 533K - 4 buổi\nhọc miễn phí\ncho học sinh mới",
+      "LÌ XÌ 300K - Giảm\ngiá HÈ KẾT NỐI\n2024",
+      "LÌ XÌ 300K - Sổ tay\n30 ngày sống biết\nơn",
+      "Voucher giảm giá 5%\ncho khóa học\nsắp tới",
+      "Suất ôn thi\nCAMBRIDGE \n MIỄN PHÍ",
+      "LÌ XÌ 666K - 30 phút\ntư vấn 1-1\nphương pháp \n học",
+      "01 bộ dụng cụ học tập\n(Bút - vở) miễn phí"
+    ];
+
+    const colors = ["#FFD700", "#FF4500", "#00FA9A", "#8A2BE2", "#FF69B4", "#20B2AA", "#DC143C", "#4169E1"];
+    let startAngle = 0;
+    const arc = (2 * Math.PI) / formattedSegments.length;
+    let spinning = false;
+
+    const maxLines = 3; // Số dòng tối đa
+    const lineHeight = 14; // Chiều cao mỗi dòng
+    const maxLineLength = 15; // Số ký tự tối đa trên 1 dòng
+    const textRadius = 120; // Giảm khoảng cách để thu nhỏ văn bản
+
+    function truncateLine(line, maxLen) {
+      return line.length > maxLen ? line.substring(0, maxLen - 1) + "…" : line;
+    }
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < formattedSegments.length; i++) {
+        let angle = startAngle + i * arc;
+        ctx.fillStyle = colors[i];
+        ctx.beginPath();
+        ctx.moveTo(200, 200);
+        ctx.arc(200, 200, 180, angle, angle + arc, false);
+        ctx.lineTo(200, 200);
+        ctx.fill();
+
+        ctx.save();
+        const centerX = 200 + Math.cos(angle + arc / 2) * textRadius;
+        const centerY = 200 + Math.sin(angle + arc / 2) * textRadius;
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle + arc / 2 + Math.PI / 2);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "white";
+        ctx.font = "12px Arial";
+        ctx.textBaseline = "middle";
+
+        let lines = formattedSegments[i].split("\n");
+        if (lines.length > maxLines) {
+          lines = lines.slice(0, maxLines - 1).concat([lines.slice(maxLines - 1).join(" ")]);
+        }
+        for (let j = 0; j < lines.length; j++) {
+          lines[j] = truncateLine(lines[j], maxLineLength);
+        }
+
+        let textBlockHeight = lines.length * lineHeight;
+        for (let j = 0; j < lines.length; j++) {
+          ctx.fillText(lines[j], 0, j * lineHeight - textBlockHeight / 2 + lineHeight / 2);
+        }
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(200, 20);
+      ctx.lineTo(190, 40);
+      ctx.lineTo(210, 40);
+      ctx.closePath();
+      ctx.fillStyle = "#ff0000";
+      ctx.fill();
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+      let spinAngle = Math.random() * 2000 + 2000;
+      let duration = 4000;
+      let startTime = performance.now();
+
+      function animateWheel(time) {
+        let elapsed = time - startTime;
+        if (elapsed < duration) {
+          let angleChange = (spinAngle * (1 - elapsed / duration)) * 0.05;
+          startAngle += angleChange;
+          drawWheel();
+          requestAnimationFrame(animateWheel);
+        } else {
+          startAngle %= 2 * Math.PI;
+          let index = Math.floor((formattedSegments.length - (startAngle / arc)) % formattedSegments.length);
+          document.getElementById("result").innerText = "Bạn đã trúng: " + formattedSegments[index].replace(/\n/g, " ");
+          spinning = false;
+        }
+      }
+      requestAnimationFrame(animateWheel);
+    }
+
+    document.getElementById("spinButton").addEventListener("click", spinWheel);
+    drawWheel();
+  </script>
+</body>
+</html>
